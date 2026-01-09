@@ -529,7 +529,9 @@
         'Fishing Icon',
         'COCK F. Icon',
         'Arcade Icon',
-        'MEGAGACOR Icon'
+        'MEGAGACOR Icon',
+        'Deposit Icon',
+        'Withdraw Icon'
     ];
     
     // Helper functions
