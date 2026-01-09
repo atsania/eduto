@@ -564,8 +564,28 @@
             // Check if margin-right is 30px or contains 30px
             // Also check if it's exactly "30px" or contains "30px" in the style string
             if (currentMargin === '30px' || currentMargin.includes('30px')) {
-                element.style.marginRight = '15px';
+                element.style.marginRight = '20px';
             }
+        }
+    }
+    
+    function adjustMenuFontSize(container) {
+        // Check if element has class 'd-flex w-100'
+        if (container.classList && container.classList.contains('d-flex') && container.classList.contains('w-100')) {
+            // Find all <a> elements inside that match the pattern
+            const links = container.querySelectorAll('a.text-decoration-none.text-white.text-uppercase');
+            links.forEach(function(link) {
+                // Get font-size from inline style
+                const currentFontSize = link.style.fontSize || '';
+                // Also check style attribute as string
+                const styleAttr = link.getAttribute('style') || '';
+                
+                // Check if font-size is 0.8em (from style.fontSize or style attribute)
+                if (currentFontSize === '0.8em' || currentFontSize.includes('0.8em') || 
+                    styleAttr.includes('font-size:0.8em') || styleAttr.includes('font-size: 0.8em')) {
+                    link.style.fontSize = '0.65em';
+                }
+            });
         }
     }
     
@@ -600,7 +620,8 @@
         const workToDo = {
             headings: [],
             customIcons: [],
-            owlItems: []
+            owlItems: [],
+            menuContainers: []
         };
         
         // Collect all work first (batch processing)
@@ -624,6 +645,11 @@
                         workToDo.owlItems.push(node);
                     }
                     
+                    // Collect menu containers (d-flex w-100)
+                    if (node.classList && node.classList.contains('d-flex') && node.classList.contains('w-100')) {
+                        workToDo.menuContainers.push(node);
+                    }
+                    
                     // Restore images if row was previously limited
                     if (node.classList && node.classList.contains('row') && 
                         node.classList.contains('mb-3') && 
@@ -645,6 +671,10 @@
                             workToDo.owlItems.push(item);
                         });
                         
+                        node.querySelectorAll('.d-flex.w-100').forEach(function(container) {
+                            workToDo.menuContainers.push(container);
+                        });
+                        
                         // Restore images in existing rows
                         node.querySelectorAll('.row.mb-3.g-1').forEach(function(row) {
                             restoreLimitedImages(row);
@@ -660,6 +690,14 @@
                     if (target.classList && target.classList.contains('owl-item') && target.classList.contains('active')) {
                         workToDo.owlItems.push(target);
                     }
+                    // Check if style changed on menu links
+                    if (target.tagName === 'A' && target.classList && target.classList.contains('text-decoration-none') && 
+                        target.classList.contains('text-white') && target.classList.contains('text-uppercase')) {
+                        const parent = target.closest('.d-flex.w-100');
+                        if (parent) {
+                            workToDo.menuContainers.push(parent);
+                        }
+                    }
                 }
             }
         });
@@ -668,6 +706,7 @@
         workToDo.headings.forEach(processHeading);
         workToDo.customIcons.forEach(addCustomIconClass);
         workToDo.owlItems.forEach(adjustOwlItemMargin);
+        workToDo.menuContainers.forEach(adjustMenuFontSize);
     }
     
     // Initial processing on DOM ready
@@ -683,6 +722,9 @@
         
         // Process owl-item active elements
         document.querySelectorAll('.owl-item.active').forEach(adjustOwlItemMargin);
+        
+        // Process menu containers (d-flex w-100)
+        document.querySelectorAll('.d-flex.w-100').forEach(adjustMenuFontSize);
     }
     
     // Run initial processing - restore images immediately
@@ -721,6 +763,8 @@
     // Additional interval checker for owl-item active elements (owl carousel changes styles frequently)
     setInterval(function() {
         document.querySelectorAll('.owl-item.active').forEach(adjustOwlItemMargin);
+        // Also check menu containers
+        document.querySelectorAll('.d-flex.w-100').forEach(adjustMenuFontSize);
     }, 300); // Check every 300ms
     
     // Auto-disconnect after 30 seconds to save resources
