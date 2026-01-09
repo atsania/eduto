@@ -555,6 +555,17 @@
         }
     }
     
+    function adjustOwlItemMargin(element) {
+        // Check if element has class 'owl-item active'
+        if (element.classList && element.classList.contains('owl-item') && element.classList.contains('active')) {
+            const currentMargin = element.style.marginRight || '';
+            // Check if margin-right is 30px or contains 30px
+            if (currentMargin.includes('30px') || currentMargin === '30px') {
+                element.style.marginRight = '15px';
+            }
+        }
+    }
+    
     // REMOVED: limitRowImages function - no longer limiting images to 3
     // All images will be displayed as before
     
@@ -585,7 +596,8 @@
     function handleMutations(mutations) {
         const workToDo = {
             headings: [],
-            customIcons: []
+            customIcons: [],
+            owlItems: []
         };
         
         // Collect all work first (batch processing)
@@ -602,6 +614,11 @@
                     // Collect custom icons
                     if (node.tagName === 'IMG') {
                         workToDo.customIcons.push(node);
+                    }
+                    
+                    // Collect owl-item active elements
+                    if (node.classList && node.classList.contains('owl-item') && node.classList.contains('active')) {
+                        workToDo.owlItems.push(node);
                     }
                     
                     // Restore images if row was previously limited
@@ -621,6 +638,10 @@
                             workToDo.customIcons.push(img);
                         });
                         
+                        node.querySelectorAll('.owl-item.active').forEach(function(item) {
+                            workToDo.owlItems.push(item);
+                        });
+                        
                         // Restore images in existing rows
                         node.querySelectorAll('.row.mb-3.g-1').forEach(function(row) {
                             restoreLimitedImages(row);
@@ -628,11 +649,22 @@
                     }
                 });
             }
+            
+            // Also check for attribute changes (class and style changes)
+            if (mutation.type === 'attributes') {
+                const target = mutation.target;
+                if (mutation.attributeName === 'class' || mutation.attributeName === 'style') {
+                    if (target.classList && target.classList.contains('owl-item') && target.classList.contains('active')) {
+                        workToDo.owlItems.push(target);
+                    }
+                }
+            }
         });
         
         // Execute all work in batch
         workToDo.headings.forEach(processHeading);
         workToDo.customIcons.forEach(addCustomIconClass);
+        workToDo.owlItems.forEach(adjustOwlItemMargin);
     }
     
     // Initial processing on DOM ready
@@ -645,6 +677,9 @@
         
         // Process custom icons
         document.querySelectorAll('img').forEach(addCustomIconClass);
+        
+        // Process owl-item active elements
+        document.querySelectorAll('.owl-item.active').forEach(adjustOwlItemMargin);
     }
     
     // Run initial processing - restore images immediately
@@ -675,6 +710,8 @@
     observer.observe(document.body, { 
         childList: true, 
         subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style'], // Only watch class and style changes
         characterData: false // Skip text changes for performance
     });
     
