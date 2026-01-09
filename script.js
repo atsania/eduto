@@ -582,26 +582,6 @@ document.addEventListener('DOMContentLoaded', function () {
 (function() {
     'use strict';
     
-    // Icon mappings (from Section 4)
-    const iconMappings = {
-        'Togel Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/TOGEL.webp',
-        'Sport Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/SPORTS.webp',
-        'Casino Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/CASINO.webp',
-        'Slot Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/SLOT.webp',
-        'Fishing Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/FISHING.webp',
-        'Table Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/TABLE.webp',
-        'COCK F. Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/COOK.webp',
-        'Arcade Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/ARCADE.webp',
-        'Promo Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/PROMO.webp',
-        'MEGAGACOR Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/DAILYWINS.webp',
-        'Home Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/HOME.webp',
-        'Register Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/DAFTAR.webp',
-        'Login Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/LOGIN.webp',
-        'Chat Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/LIVECHATS.webp',
-        'Deposit Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/DEPOSIT.webp',
-        'Withdraw Icon': 'https://cdn.roobotassets.com/edu/assets/media/icon/WITHRAW.webp'
-    };
-    
     // Emoji helper using code points to avoid charset issues
     const EMOJI = {
         sparkle: String.fromCodePoint(0x2728),   // âœ¨
@@ -643,14 +623,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // REMOVED: limitRowImages function - no longer limiting images to 3
     // All images will be displayed as before
     
-    function updateIcon(img) {
-        if (img.dataset.iconUpdated) return;
-        if (iconMappings.hasOwnProperty(img.alt)) {
-            img.src = iconMappings[img.alt];
-            img.dataset.iconUpdated = 'true';
-        }
-    }
-    
     // Restore images that were previously limited
     function restoreLimitedImages(row) {
         if (!row.dataset.imagesLimited) return;
@@ -677,7 +649,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Main handler for mutations - batch processing for performance
     function handleMutations(mutations) {
         const workToDo = {
-            icons: [],
             headings: [],
             jackpot: []
         };
@@ -687,11 +658,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (mutation.addedNodes.length > 0) {
                 mutation.addedNodes.forEach(function(node) {
                     if (node.nodeType !== 1) return; // Skip text nodes
-                    
-                    // Collect icons
-                    if (node.tagName === 'IMG' && iconMappings.hasOwnProperty(node.alt)) {
-                        workToDo.icons.push(node);
-                    }
                     
                     // Collect headings
                     if (node.tagName === 'H3' && (node.classList.contains('my-2') || node.classList.contains('text-center'))) {
@@ -713,9 +679,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Check children
                     if (node.querySelectorAll) {
                         node.querySelectorAll('img').forEach(function(img) {
-                            if (iconMappings.hasOwnProperty(img.alt)) {
-                                workToDo.icons.push(img);
-                            }
                             if (img.src && img.src.includes('jackpot.gif')) {
                                 workToDo.jackpot.push(img);
                             }
@@ -735,7 +698,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         
         // Execute all work in batch
-        workToDo.icons.forEach(updateIcon);
         workToDo.headings.forEach(processHeading);
         workToDo.jackpot.forEach(hideJackpotImage);
     }
@@ -747,7 +709,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Then process other elements
         document.querySelectorAll('img').forEach(function(img) {
-            updateIcon(img);
             if (img.src && img.src.includes('jackpot.gif')) {
                 hideJackpotImage(img);
             }
