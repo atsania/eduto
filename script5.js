@@ -520,7 +520,16 @@
         'Login Icon',
         'Register Icon',
         'Promo Icon',
-        'Chat Icon'
+        'Chat Icon',
+        'Slot Icon',
+        'Casino Icon',
+        'Sport Icon',
+        'Togel Icon',
+        'Table Icon',
+        'Fishing Icon',
+        'COCK F. Icon',
+        'Arcade Icon',
+        'MEGAGACOR Icon'
     ];
     
     // Helper functions
