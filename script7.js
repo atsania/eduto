@@ -558,9 +558,12 @@
     function adjustOwlItemMargin(element) {
         // Check if element has class 'owl-item active'
         if (element.classList && element.classList.contains('owl-item') && element.classList.contains('active')) {
+            // Get margin-right from inline style
             const currentMargin = element.style.marginRight || '';
+            
             // Check if margin-right is 30px or contains 30px
-            if (currentMargin.includes('30px') || currentMargin === '30px') {
+            // Also check if it's exactly "30px" or contains "30px" in the style string
+            if (currentMargin === '30px' || currentMargin.includes('30px')) {
                 element.style.marginRight = '15px';
             }
         }
@@ -714,6 +717,11 @@
         attributeFilter: ['class', 'style'], // Only watch class and style changes
         characterData: false // Skip text changes for performance
     });
+    
+    // Additional interval checker for owl-item active elements (owl carousel changes styles frequently)
+    setInterval(function() {
+        document.querySelectorAll('.owl-item.active').forEach(adjustOwlItemMargin);
+    }, 300); // Check every 300ms
     
     // Auto-disconnect after 30 seconds to save resources
     setTimeout(function() {
