@@ -514,6 +514,15 @@
     
     const normalize = (s) => (s || '').replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
     
+    // Icon alt texts that need custom class
+    const customIconAlts = [
+        'Home Icon',
+        'Login Icon',
+        'Register Icon',
+        'Promo Icon',
+        'Chat Icon'
+    ];
+    
     // Helper functions
     function processHeading(h) {
         if (h.dataset.titleReplaced === '1') return;
@@ -523,6 +532,17 @@
             h.textContent = v;
             h.classList.add('stylish-heading');
             h.dataset.titleReplaced = '1';
+        }
+    }
+    
+    function addCustomIconClass(img) {
+        if (img.dataset.customIconProcessed) return;
+        if (img.tagName !== 'IMG') return;
+        
+        const alt = img.getAttribute('alt') || '';
+        if (customIconAlts.includes(alt)) {
+            img.classList.add('down-cus-icon');
+            img.dataset.customIconProcessed = 'true';
         }
     }
     
@@ -555,7 +575,8 @@
     // Main handler for mutations - batch processing for performance
     function handleMutations(mutations) {
         const workToDo = {
-            headings: []
+            headings: [],
+            customIcons: []
         };
         
         // Collect all work first (batch processing)
@@ -567,6 +588,11 @@
                     // Collect headings
                     if (node.tagName === 'H3' && (node.classList.contains('my-2') || node.classList.contains('text-center'))) {
                         workToDo.headings.push(node);
+                    }
+                    
+                    // Collect custom icons
+                    if (node.tagName === 'IMG') {
+                        workToDo.customIcons.push(node);
                     }
                     
                     // Restore images if row was previously limited
@@ -582,6 +608,10 @@
                             workToDo.headings.push(h);
                         });
                         
+                        node.querySelectorAll('img').forEach(function(img) {
+                            workToDo.customIcons.push(img);
+                        });
+                        
                         // Restore images in existing rows
                         node.querySelectorAll('.row.mb-3.g-1').forEach(function(row) {
                             restoreLimitedImages(row);
@@ -593,6 +623,7 @@
         
         // Execute all work in batch
         workToDo.headings.forEach(processHeading);
+        workToDo.customIcons.forEach(addCustomIconClass);
     }
     
     // Initial processing on DOM ready
@@ -602,6 +633,9 @@
         
         // Then process other elements
         document.querySelectorAll('h3.my-2, h3.text-center').forEach(processHeading);
+        
+        // Process custom icons
+        document.querySelectorAll('img').forEach(addCustomIconClass);
     }
     
     // Run initial processing - restore images immediately
