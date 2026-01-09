@@ -564,7 +564,7 @@
             // Check if margin-right is 30px or contains 30px
             // Also check if it's exactly "30px" or contains "30px" in the style string
             if (currentMargin === '30px' || currentMargin.includes('30px')) {
-                element.style.marginRight = '20px';
+                element.style.marginRight = '25px';
             }
         }
     }
