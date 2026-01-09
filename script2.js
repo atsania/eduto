@@ -307,133 +307,6 @@
 })();
 
 // ============================================
-// 2. JACKPOT COUNTER
-// ============================================
-document.addEventListener('DOMContentLoaded', function () {
-    (function() {
-        const isHomePage = window.location.pathname === '/' || 
-                          window.location.pathname === '/index.html' || 
-                          window.location.pathname === '/index.php' ||
-                          window.location.pathname === '';
-        if (!isHomePage) return;
-
-        const css = `
-            .jackpot { position: relative; padding: 30px; max-width: 1263px; box-sizing: border-box; margin: auto; overflow: hidden; border-radius: 12px; -webkit-filter: drop-shadow(1px 3px 3px #100800c2); filter: drop-shadow(1px 3px 3px #100800c2); font-family: digit; background: transparent}
-            .jackpot__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 0; pointer-events: none; background: transparent}
-            .jackpot__content { position: relative; z-index: 1; background: transparent}
-            .jackpot__counter { margin: auto; display: flex; justify-content: space-between; align-items: center; font-weight: 500; height: auto; background-color:transparent; }            
-            .id-prefix { color: #251d0cff; font-family: 'freebooter'; text-shadow: rgb(254 254 171) 2px 1px 2px; margin-left: 1.3em; }
-            .jackpot-value { color: #fbff00ff; margin-right: 1em; text-shadow: rgb(30 30 30) 2px 1px 2px; }
-        `;
-        const styleSheet = document.createElement("style");
-        styleSheet.innerText = css;
-        document.head.appendChild(styleSheet);
-
-        const jackpotElement = document.createElement('div');
-        jackpotElement.className = 'jackpot';
-
-        // Use img element instead of video for .webp format
-        const bgImage = document.createElement('img');
-        bgImage.className = 'jackpot__bg';
-        bgImage.setAttribute('loading', 'lazy');
-        bgImage.setAttribute('alt', 'Jackpot Background');
-        // Load image source when visible untuk performance
-        if ('IntersectionObserver' in window) {
-            const imageObserver = new IntersectionObserver(function(entries) {
-                entries.forEach(function(entry) {
-                    if (entry.isIntersecting && !bgImage.src) {
-                        bgImage.src = 'https://cdn.roobotassets.com/edu/assets/media/progresif/progresif_jp_edutoto.webp';
-                        imageObserver.unobserve(entry.target);
-                    }
-                });
-            }, { rootMargin: '200px' });
-            imageObserver.observe(jackpotElement);
-        } else {
-            // Fallback untuk browser lama
-            bgImage.src = 'https://cdn.roobotassets.com/edu/assets/media/progresif/progresif_jp_edutoto.webp';
-        }
-        // Style untuk image sebagai background
-        bgImage.style.cssText = "position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;object-fit:contain !important;z-index:0 !important;pointer-events:none !important;";
-
-        const content = document.createElement('div');
-        content.className = 'jackpot__content';
-        content.innerHTML = `<span class="jackpot__counter" data-jackpot="2828925599"></span>`;
-
-        jackpotElement.appendChild(bgImage);
-        jackpotElement.appendChild(content);
-
-        const mainContent = document.querySelector('#maincontent');
-        const container = document.querySelector('#maincontent > .container');
-        if (mainContent && container) {
-            mainContent.insertBefore(jackpotElement, container);
-        }
-
-        class Jackpot {
-            constructor(selector) {
-                this.container = document.querySelector(selector);
-                if (!this.container) {
-                    console.warn('Jackpot container not found');
-                    return;
-                }
-                this.counterElement = this.container.querySelector('.jackpot__counter');
-                if (!this.counterElement) {
-                    console.warn('Jackpot counter element not found');
-                    return;
-                }
-                const BASE = parseInt(this.counterElement.getAttribute('data-jackpot')) || 0;
-                this.M = 1_299_899;
-                const START_SPREAD_M = 250;
-                const MIN_SPREAD_M = 800;
-                const MAX_SPREAD_M = 1200;
-                this.STEP_MIN_M = 1;
-                this.STEP_MAX_M = 8;
-                this.snapToMillions = true;
-                this.base = BASE;
-                this.currentValue = BASE + this.randomInt(-START_SPREAD_M, START_SPREAD_M) * this.M;
-                this.minValue = BASE - MIN_SPREAD_M * this.M;
-                this.maxValue = BASE + MAX_SPREAD_M * this.M;
-                this.loop();
-            }
-            loop() {
-                const mid = (this.minValue + this.maxValue) / 2;
-                const distToMid = mid - this.currentValue;
-                const pTowardMid = 0.5 + Math.min(0.3, Math.abs(distToMid) / (this.maxValue - this.minValue));
-                const towardSign = distToMid >= 0 ? +1 : -1;
-                let stepSign = (Math.random() < pTowardMid) ? towardSign : -towardSign;
-                if (Math.random() < 0.15) stepSign *= -1;
-                const stepM = this.randomInt(this.STEP_MIN_M, this.STEP_MAX_M);
-                let next = this.currentValue + stepSign * stepM * this.M;
-                if (next < this.minValue || next > this.maxValue) {
-                    stepSign *= -1;
-                    next = this.currentValue + stepSign * stepM * this.M;
-                    if (next < this.minValue) next = this.minValue;
-                    if (next > this.maxValue) next = this.maxValue;
-                }
-                this.currentValue = next;
-                this.show(this.currentValue);
-                const randomInterval = this.randomInt(900, 1900);
-                setTimeout(() => this.loop(), randomInterval);
-            }
-            show(value) {
-                if (!this.counterElement) return;
-                let v = Math.max(0, Math.floor(value));
-                if (this.snapToMillions) v = Math.round(v / this.M) * this.M;
-                const formatted = new Intl.NumberFormat('id-ID').format(v);
-                this.counterElement.innerHTML = `<span class="id-prefix">JACKPOT </span><span class="jackpot-value">${formatted}</span>`;
-            }
-            randomInt(min, max) {
-                return Math.floor(Math.random() * (max - min + 1) + min);
-            }
-        }
-        
-        // Initialize Jackpot counter after element is inserted into DOM
-        setTimeout(() => {
-            new Jackpot('.jackpot');
-        }, 100);
-    })();
-});
-
-// ============================================
 // 3. VIDEO CAROUSEL
 // ============================================
 (function () {
@@ -576,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function () {
 // ============================================
 // 4. CONSOLIDATED DOM MONITOR (Replaces Sections 4, 9, 10)
 // ============================================
-// Single MutationObserver handles: Menu Icons, Headings, Hide Jackpot GIF
+// Single MutationObserver handles: Headings
 // Image limiting removed - all images are displayed
 // ============================================
 (function() {
@@ -614,12 +487,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    function hideJackpotImage(img) {
-        if (img.dataset.jackpotHidden) return;
-        img.dataset.jackpotHidden = 'true';
-        img.style.cssText = 'display:none !important; visibility:hidden !important; opacity:0 !important; height:0 !important; width:0 !important; margin:0 !important; padding:0 !important;';
-    }
-    
     // REMOVED: limitRowImages function - no longer limiting images to 3
     // All images will be displayed as before
     
@@ -649,8 +516,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Main handler for mutations - batch processing for performance
     function handleMutations(mutations) {
         const workToDo = {
-            headings: [],
-            jackpot: []
+            headings: []
         };
         
         // Collect all work first (batch processing)
@@ -664,11 +530,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         workToDo.headings.push(node);
                     }
                     
-                    // Collect jackpot images
-                    if (node.tagName === 'IMG' && (node.src.includes('jackpot.gif') || node.alt === 'jackpot')) {
-                        workToDo.jackpot.push(node);
-                    }
-                    
                     // Restore images if row was previously limited
                     if (node.classList && node.classList.contains('row') && 
                         node.classList.contains('mb-3') && 
@@ -678,12 +539,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     
                     // Check children
                     if (node.querySelectorAll) {
-                        node.querySelectorAll('img').forEach(function(img) {
-                            if (img.src && img.src.includes('jackpot.gif')) {
-                                workToDo.jackpot.push(img);
-                            }
-                        });
-                        
                         node.querySelectorAll('h3.my-2, h3.text-center').forEach(function(h) {
                             workToDo.headings.push(h);
                         });
@@ -699,7 +554,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         // Execute all work in batch
         workToDo.headings.forEach(processHeading);
-        workToDo.jackpot.forEach(hideJackpotImage);
     }
     
     // Initial processing on DOM ready
@@ -708,12 +562,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.row.mb-3.g-1[data-images-limited="true"]').forEach(restoreLimitedImages);
         
         // Then process other elements
-        document.querySelectorAll('img').forEach(function(img) {
-            if (img.src && img.src.includes('jackpot.gif')) {
-                hideJackpotImage(img);
-            }
-        });
-        
         document.querySelectorAll('h3.my-2, h3.text-center').forEach(processHeading);
     }
     
@@ -940,35 +788,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const debouncedUpdateHeadings = window.debounce(updateHeadings, 150);
     const observer = new MutationObserver(debouncedUpdateHeadings);
     observer.observe(document.body, { childList: true, subtree: true, characterData: false }); // characterData: false untuk performance
-})();
-
-// ============================================
-// 10. HIDE DEFAULT JACKPOT.GIF IMAGE
-// ============================================
-(function() {
-    function hideJackpotGif() {
-        const jackpotImages = document.querySelectorAll('img[src*="jackpot.gif"], img[alt="jackpot"].img-3d, .container > img[src*="jackpot.gif"]');
-        jackpotImages.forEach(img => {
-            img.style.display = 'none';
-            img.style.visibility = 'hidden';
-            img.style.opacity = '0';
-            img.style.height = '0';
-            img.style.width = '0';
-            img.style.margin = '0';
-            img.style.padding = '0';
-        });
-    }
-    
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hideJackpotGif);
-    } else {
-        hideJackpotGif();
-    }
-    
-    // Watch for dynamically added images (optimized dengan debounce)
-    const debouncedHide = window.debounce(hideJackpotGif, 100);
-    const observer = new MutationObserver(debouncedHide);
-    observer.observe(document.body, { childList: true, subtree: true });
 })();
 
 // ============================================
