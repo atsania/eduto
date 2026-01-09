@@ -318,49 +318,77 @@
         if (!isHomePage) return;
 
         const banners = [
-            'https://cdn.roobotassets.com/edu/assets/media/banner/natal-tahunbaru.webm',
-            'https://cdn.roobotassets.com/edu/assets/media/banner/slot-g.webm',
-            'https://cdn.roobotassets.com/edu/assets/media/banner/bonus-new-member-100.webm',
-            'https://cdn.roobotassets.com/edu/assets/media/banner/10rb.webm',
-            'https://cdn.roobotassets.com/edu/assets/media/banner/bonus-to.webm',
-            'https://cdn.roobotassets.com/edu/assets/media/banner/garansi-kekalahan.webm'
+            'https://cdn.cobanih.com/banner/banner-edu-1.webp'
         ];
 
         const $carousel = $('<div id="main-video-carousel" class="owl-carousel owl-theme"></div>');
 
-        // OPTIMIZED: Only load first video, others load on demand (lazy loading)
+        // Helper function to detect if file is image or video
+        function isImageFile(src) {
+            const imageExts = ['.webp', '.jpg', '.jpeg', '.png', '.gif', '.svg'];
+            const lowerSrc = src.toLowerCase();
+            return imageExts.some(ext => lowerSrc.endsWith(ext));
+        }
+
+        // OPTIMIZED: Only load first media, others load on demand (lazy loading)
         banners.forEach(function (src, index) {
-            const $video = $('<video>', { 
-                loop: false, 
-                muted: true, 
-                playsinline: true, 
-                preload: index === 0 ? 'auto' : 'none' // Only preload first video
-            });
-            $video.attr('webkit-playsinline', '');
-            $video.prop('muted', true);
+            const isImage = isImageFile(src);
+            let $media;
             
-            // Only set src for first video, others use data-src for lazy loading
-            if (index === 0) {
-                $video.attr('src', src);
-                $video.on('canplaythrough', function () { 
-                    try { this.play(); } catch(e){} 
+            if (isImage) {
+                // Create img element for images (webp, jpg, png, etc)
+                $media = $('<img>', {
+                    loading: index === 0 ? 'eager' : 'lazy',
+                    alt: 'Banner'
+                });
+                
+                // Only set src for first image, others use data-src for lazy loading
+                if (index === 0) {
+                    $media.attr('src', src);
+                } else {
+                    $media.attr('data-src', src);
+                }
+                
+                // Style for images
+                $media.css({
+                    width: '100%',
+                    height: 'auto',
+                    display: 'block'
                 });
             } else {
-                // Use data-src for lazy loading - will be loaded when video becomes active
-                $video.attr('data-src', src);
+                // Create video element for videos (webm, mp4, etc)
+                $media = $('<video>', { 
+                    loop: false, 
+                    muted: true, 
+                    playsinline: true, 
+                    preload: index === 0 ? 'auto' : 'none'
+                });
+                $media.attr('webkit-playsinline', '');
+                $media.prop('muted', true);
+                
+                // Only set src for first video, others use data-src for lazy loading
+                if (index === 0) {
+                    $media.attr('src', src);
+                    $media.on('canplaythrough', function () { 
+                        try { this.play(); } catch(e){} 
+                    });
+                } else {
+                    $media.attr('data-src', src);
+                }
             }
             
-            const $item = $('<div class="item"></div>').append($video);
+            const $item = $('<div class="item"></div>').append($media);
             $carousel.append($item);
         });
 
         const $target = $('#content');
         if ($target.length) $target.prepend($carousel);
 
-        function playActiveVideo(owlEvent) {
+        function playActiveMedia(owlEvent) {
             const $root = $(owlEvent?.target || '#main-video-carousel');
             const $active = $root.find('.owl-item.active');
             const activeVideo = $active.find('video').get(0);
+            const activeImage = $active.find('img').get(0);
             
             // Pause all other videos (but don't unload them)
             $root.find('video').each(function () { 
@@ -372,6 +400,17 @@
                 } 
             });
             
+            // Handle images - lazy load if needed
+            if (activeImage) {
+                if (activeImage.dataset.src && !activeImage.src) {
+                    activeImage.src = activeImage.dataset.src;
+                    activeImage.removeAttribute('data-src');
+                }
+                // Images don't need auto-advance, but we can set a timer if needed
+                // For now, images will stay until user manually navigates
+            }
+            
+            // Handle videos
             if (activeVideo) {
                 // Lazy load video if not loaded yet
                 if (activeVideo.dataset.src && !activeVideo.src) {
@@ -430,10 +469,10 @@
             }
             $carousel.owlCarousel({
                 items: 1, loop: true, autoplay: false, nav: true, dots: false,
-                onInitialized: function (e) { attachPerVideoHandlers(); playActiveVideo(e); },
-                onTranslated: function (e) { playActiveVideo(e); }
+                onInitialized: function (e) { attachPerVideoHandlers(); playActiveMedia(e); },
+                onTranslated: function (e) { playActiveMedia(e); }
             });
-            setTimeout(() => playActiveVideo({ target: $carousel.get(0) }), 60);
+            setTimeout(() => playActiveMedia({ target: $carousel.get(0) }), 60);
             return true;
         }
 
@@ -441,7 +480,7 @@
             let tries = 0;
             const timer = setInterval(function () { tries++; if (initOwl() || tries > 20) clearInterval(timer); }, 150);
         }
-        document.addEventListener('visibilitychange', function () { if (!document.hidden) { playActiveVideo({ target: $carousel.get(0) }); } });
+        document.addEventListener('visibilitychange', function () { if (!document.hidden) { playActiveMedia({ target: $carousel.get(0) }); } });
         $carousel.on('mouseenter', function () { $carousel.find('video').each(function () { if (!this.muted) this.muted = true; }); });
     });
 })();
